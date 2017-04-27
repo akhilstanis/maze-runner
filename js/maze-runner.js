@@ -1,111 +1,119 @@
 const RUNNER = '$';
 const WALL   = '@';
+const VISITED = '#';
 
 let isGoalState = (state) => {
   let map = state.map;
-  return map[map.length - 1].includes(RUNNER);
+  return map[map.length - 1].includes(VISITED);
 };
 
 let findPlayer = (map) => {
   let row = map.findIndex( e => e.includes(RUNNER) );
-  let col = map[row].indexOf(RUNNER);
-
-  return [row, col];
-};
-
-let move = (map, from, to) => {
-  [frow,fcol] = from;
-  [trow,tcol] = to;
-
-  let mapCopy = JSON.parse( JSON.stringify(map) );
-  mapCopy[frow][fcol] = ' ';
-  mapCopy[trow][tcol] = RUNNER;
-
-  return mapCopy;
-};
-
-let successors = (state) => {
-  let map = state.map;
-  let [prow, pcol] = findPlayer(state.map);
-  let results = [];
-
-  if(state.previousMove != 'UP' && map[prow+1][pcol] == ' ')
-    results.unshift({ map: move(map, [prow,pcol], [prow+1,pcol]), previousMove: 'DOWN' })
-
-  if(state.previousMove != 'LEFT' && map[prow][pcol+1] == ' ')
-    results.unshift({ map: move(map, [prow,pcol], [prow,pcol+1]), previousMove: 'RIGHT' })
-
-  if(state.previousMove != 'RIGHT' && map[prow][pcol-1] == ' ')
-    results.unshift({ map: move(map, [prow,pcol], [prow,pcol-1]), previousMove: 'LEFT' })
-
-  if(state.previousMove != 'DOWN' && map[prow-1][pcol] == ' ')
-    results.unshift({ map: move(map, [prow,pcol], [prow-1,pcol]), previousMove: 'UP' })
-
-  return results;
+  return row >= 0 ? [row,map[row].indexOf(RUNNER)] : [null,null];
 };
 
 let mapToString = (map) => {
   return map.map( row => row.join('') ).join("\n");
 };
 
+
+let runStreak = (map,from) => {
+  let [row,col] = from;
+  let mapCopy = JSON.parse( JSON.stringify(map) );
+
+  mapCopy[row][col] = VISITED;
+
+  while(true) {
+    let nextSteps = [
+      [row-1,col],
+      [row,col+1],
+      [row+1,col],
+      [row, col-1]
+    ].filter(([r,c]) => mapCopy[r] && mapCopy[r][c] == ' ');
+
+    if(nextSteps.length == 0){
+      mapCopy[row][col] = VISITED;
+      break;
+    } else if(nextSteps.length == 1) {
+      mapCopy[row][col] = VISITED;
+      [row,col] = nextSteps[0];
+    } else {
+      mapCopy[row][col] = RUNNER;
+      break;
+    }
+  }
+
+  return mapCopy;
+};
+
+let successors = (state) => {
+  let map = state.map;
+  let [prow, pcol] = findPlayer(map);
+
+  if(prow == null) return [];
+
+  let results = [];
+
+  map[prow][pcol] = VISITED;
+
+  try {
+    if(map[prow+1][pcol] == ' ')
+      results.unshift({ map: runStreak(map, [prow+1,pcol]) })
+
+    if(map[prow][pcol+1] == ' ')
+      results.unshift({ map: runStreak(map, [prow,pcol+1]) })
+
+    if(map[prow][pcol-1] == ' ')
+      results.unshift({ map: runStreak(map, [prow,pcol-1]) })
+
+    if(map[prow-1][pcol] == ' ')
+      results.unshift({ map: runStreak(map, [prow-1,pcol]) })
+
+  } catch(e) {
+    console.error('Index out of bounds while finding successors?',e);
+  }
+
+  return results;
+};
+
 let dfs = (frontier) => {
   let visited = [];
 
-  let loop = () => {
+  let mapPainterBuffer = generateMapPainter(frontier[0].map);
+
+  while(true) {
     let node = frontier.pop();
-    if(!node) return;
+    if(!node) break;
 
     let strMap = mapToString(node.map);
-    if(visited.includes(strMap)) {
-      loop();
-      return;
-    }
+    if(visited.includes(strMap)) continue;
 
-    walkMapHTML(node.map);
     visited.push(strMap);
+    mapPainterBuffer.push(node.map);
 
     if(isGoalState(node)) {
-      return;
-    } else {
-      frontier = frontier.concat(successors(node));
-      setTimeout(loop, 100);
-    }
-  };
-
-  loop();
-
-};
-
-let bfs = (frontier) => {
-  let visited = [];
-
-  let loop = () => {
-    let node = frontier.shift();
-    if(!node) return;
-
-    let strMap = mapToString(node.map);
-    if(visited.includes(strMap)) {
-      loop();
-      return;
-    }
-
-    walkMapHTML(node.map);
-    visited.push(strMap);
-
-    if(isGoalState(node)) {
-      return;
-    } else {
-      frontier = frontier.concat(successors(node));
-      setTimeout(loop, 100);
-    }
-  };
-
-  loop();
+      break;
+    } else frontier = frontier.concat(successors(node));
+  }
 
 };
 
 
 // View Code
+
+let generateMapPainter = (iMap, delay = 1000) => {
+ generateMapHTML(iMap);
+
+  let mapPainterBuffer = [];
+  let mapPainter = () => {
+    let map = mapPainterBuffer.shift();
+    if(map) paintMapHTML(map);
+    else clearInterval(mapPainterTimer);
+  };
+  let mapPainterTimer = setInterval(mapPainter, delay);
+
+  return mapPainterBuffer;
+};
 
 let generateMapHTML = (map) => {
   let rows = map.map((row,i) => {
@@ -119,10 +127,15 @@ let generateMapHTML = (map) => {
   $('.map').html(rows);
 };
 
-let walkMapHTML = (map) => {
-  let [prow, pcol] = findPlayer(map);
-  $(`#r${prow}c${pcol}`).addClass('walked');
-};
+let paintMapHTML = (map) => {
+  map.forEach((row,i) => {
+    row.forEach((col,j) => {
+      let $pixel = $(`#r${i}c${j}`);
+      if(col == '#' && !$pixel.hasClass('walked'))
+        $pixel.addClass('walked');
+    });
+  });
+}
 
 let generateRandomMaze = (options) => {
   let mazeMap = amaze(options);
@@ -133,13 +146,10 @@ let generateRandomMaze = (options) => {
   return mazeMap;
 };
 
-let MAP = generateRandomMaze({ rows: 10});
+let MAP = generateRandomMaze({ rows: 9, cols: 9});
 
-generateMapHTML(MAP);
-
-bfs([{
+dfs([{
   map: MAP,
-  previousMove: 'DOWN'
 }]);
 
 
