@@ -16,10 +16,11 @@ let mapToString = (map) => {
   return map.map( row => row.join('') ).join("\n");
 };
 
+let deepCopy = (obj) => JSON.parse( JSON.stringify(obj) );
 
 let runStreak = (map,from) => {
   let [row,col] = from;
-  let mapCopy = JSON.parse( JSON.stringify(map) );
+  let mapCopy = deepCopy(map)
 
   mapCopy[row][col] = VISITED;
 
@@ -125,12 +126,12 @@ let bfs = (frontier) => {
 // View Code
 
 let generateMapPainter = (iMap, delay = 1000) => {
- generateMapHTML(iMap);
+ let $mapConatiner = generateMapHTML(iMap);
 
   let mapPainterBuffer = [];
   let mapPainter = () => {
     let map = mapPainterBuffer.shift();
-    if(map) paintMapHTML(map);
+    if(map) paintMapHTML($mapConatiner, map);
     else clearInterval(mapPainterTimer);
   };
   let mapPainterTimer = setInterval(mapPainter, delay);
@@ -147,13 +148,16 @@ let generateMapHTML = (map) => {
     return `<div class="row">${cols}</div>`;
   }).join('');
 
-  $('.map').html(rows);
+  let $mapConatiner = $(`<div class="map">${rows}</div>`);
+  $('body').append($mapConatiner);
+
+  return $mapConatiner;
 };
 
-let paintMapHTML = (map) => {
+let paintMapHTML = ($container, map) => {
   map.forEach((row,i) => {
     row.forEach((col,j) => {
-      let $pixel = $(`#r${i}c${j}`);
+      let $pixel = $container.find(`#r${i}c${j}`);
       if(col == '#' && !$pixel.hasClass('walked'))
         $pixel.addClass('walked');
     });
@@ -169,10 +173,15 @@ let generateRandomMaze = (options) => {
   return mazeMap;
 };
 
+
 let MAP = generateRandomMaze({ rows: 9, cols: 9});
 
 bfs([{
-  map: MAP,
+  map: deepCopy(MAP),
+}]);
+
+dfs([{
+  map: deepCopy(MAP),
 }]);
 
 
