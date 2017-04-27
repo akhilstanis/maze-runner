@@ -98,6 +98,29 @@ let dfs = (frontier) => {
 
 };
 
+let bfs = (frontier) => {
+  let visited = [];
+
+  let mapPainterBuffer = generateMapPainter(frontier[0].map);
+
+  while(true) {
+    let node = frontier.shift();
+    if(!node) break;
+
+    let strMap = mapToString(node.map);
+    if(visited.includes(strMap)) continue;
+
+    visited.push(strMap);
+    mapPainterBuffer.push(node.map);
+
+    if(isGoalState(node)) {
+      break;
+    } else frontier = frontier.concat(successors(node));
+  }
+
+};
+
+
 
 // View Code
 
@@ -148,7 +171,7 @@ let generateRandomMaze = (options) => {
 
 let MAP = generateRandomMaze({ rows: 9, cols: 9});
 
-dfs([{
+bfs([{
   map: MAP,
 }]);
 
