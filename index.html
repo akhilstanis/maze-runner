@@ -1,8 +1,17 @@
 <html>
   <head>
     <style>
+      body {
+        text-align: center;
+      }
+
+      .mapContainer {
+        display: inline-block;
+      }
+
       .map {
         margin: 10px;
+        display: inline-block;
       }
 
       .col {
@@ -19,10 +28,45 @@
       .walked {
         background: red;
       }
+
+      #controls-container {
+        text-align: center;
+      }
     </style>
   </head>
   <body>
-    <div class="map"></div>
+    <div id="controls-container">
+      <h1>Maze Runner</h1>
+      Rows <input id="rows-input" type="number" name="rows" min="5" max="100" value="10" />
+      Columns <input id="cols-input" type="number" name="cols" min="5" max="100" value="10" />
+      Animation Speed <input id="speed-input" type="range" min="100" max="1000" step="10" value="200" />
+      <button id="run-btn">Run!</button>
+    </div>
+
+    <div class="mapContainer">
+      <h2>BFS</h2>
+      <h4><span class="nodes-expanded"></span> nodes</h4>
+      <div class="mapContainer" id="bfs"></div>
+    </div>
+
+    <div class="mapContainer">
+      <h2>DFS</h2>
+      <h4><span class="nodes-expanded"></span> nodes</h4>
+      <div class="mapContainer" id="dfs"></div>
+    </div>
+
+    <div class="mapContainer">
+      <h2>A*</h2>
+      <h4><span class="nodes-expanded"></span> nodes</h4>
+      <div class="mapContainer" id="astar"></div>
+    </div>
+
+    <br/>
+
+    <div class="mapContainer">
+      <h2>Solution</h2>
+      <div class="mapContainer" id="solution"></div>
+    </div>
 
     <script src="js/jquery-3.2.1.js"></script>
     <script src="js/amaze.js"></script>

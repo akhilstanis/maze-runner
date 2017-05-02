@@ -1,6 +1,7 @@
 const RUNNER = '$';
 const WALL   = '@';
 const VISITED = '#';
+let   ANIMATION_SPEED = 200;
 
 let isGoalState = (state) => {
   let map = state.map;
@@ -85,48 +86,57 @@ let successors = (state) => {
 };
 
 let dfs = (frontier) => {
-  let mapPainterBuffer = generateMapPainter(frontier[0].map);
+  let mapPainterBuffer = generateMapPainter('#dfs', frontier[0].map);
+  let nodesExpanded = 0;
 
   while(true) {
     let node = frontier.pop();
     if(!node) break;
+    nodesExpanded += 1;
 
     mapPainterBuffer.push(node.map);
 
     if(isGoalState(node)) {
-      break;
+      setNodesExpanded('#dfs', nodesExpanded);
+      return node;
     } else frontier = frontier.concat(successors(node));
   }
 
 };
 
 let bfs = (frontier) => {
-  let mapPainterBuffer = generateMapPainter(frontier[0].map);
+  let mapPainterBuffer = generateMapPainter('#bfs', frontier[0].map);
+  let nodesExpanded = 0;
 
   while(true) {
     let node = frontier.shift();
     if(!node) break;
+    nodesExpanded += 1;
 
     mapPainterBuffer.push(node.map);
 
     if(isGoalState(node)) {
-      break;
+      setNodesExpanded('#bfs', nodesExpanded);
+      return node;
     } else frontier = frontier.concat(successors(node));
   }
 
 };
 
 let astar = (frontier) => {
-  let mapPainterBuffer = generateMapPainter(frontier[0].map);
+  let mapPainterBuffer = generateMapPainter('#astar', frontier[0].map);
+  let nodesExpanded = 0;
 
   while(true) {
     let node = frontier.shift();
     if(!node) break;
+    nodesExpanded += 1;
 
     mapPainterBuffer.push(node.map);
 
     if(isGoalState(node)) {
-      break;
+      setNodesExpanded('#astar', nodesExpanded);
+      return node;
     } else frontier = frontier.concat(successors(node));
 
     frontier.sort((a,b) => (a.cost + a.distanceToDestination) - (b.cost + b.distanceToDestination));
@@ -137,8 +147,8 @@ let astar = (frontier) => {
 
 // View Code
 
-let generateMapPainter = (iMap, delay = 1000) => {
- let $mapConatiner = generateMapHTML(iMap);
+let generateMapPainter = (container, iMap, delay = ANIMATION_SPEED) => {
+ let $mapConatiner = generateMapHTML(container, iMap);
 
   let mapPainterBuffer = [];
   let mapPainter = () => {
@@ -151,7 +161,7 @@ let generateMapPainter = (iMap, delay = 1000) => {
   return mapPainterBuffer;
 };
 
-let generateMapHTML = (map) => {
+let generateMapHTML = (container, map) => {
   let rows = map.map((row,i) => {
     let cols = row.map((col,j) => {
       return `<div id="r${i}c${j}" class="col ${ col == WALL ? 'wall' : '' }"></div>`;
@@ -161,7 +171,7 @@ let generateMapHTML = (map) => {
   }).join('');
 
   let $mapConatiner = $(`<div class="map">${rows}</div>`);
-  $('body').append($mapConatiner);
+  $(container).html($mapConatiner);
 
   return $mapConatiner;
 };
@@ -185,26 +195,38 @@ let generateRandomMaze = (options) => {
   return mazeMap;
 };
 
+let setNodesExpanded = (container, nodes) => {
+  $(container).siblings().find('.nodes-expanded').html(nodes);
+}
 
-let MAP = generateRandomMaze({ rows: 3, cols: 3});
-console.log(mapToString(MAP));
+$('#run-btn').on('click', function(){
 
-bfs([{
-  map: deepCopy(MAP),
-  cost: 0,
-  destination: [MAP.length-1,MAP[MAP.length-1].indexOf(' ')]
-}]);
+  let rows = parseInt($('#rows-input').val());
+  let cols = parseInt($('#cols-input').val());
+  ANIMATION_SPEED = 1000 - parseInt($('#speed-input').val());
 
-dfs([{
-  map: deepCopy(MAP),
-  cost: 0,
-  destination: [MAP.length-1,MAP[MAP.length-1].indexOf(' ')]
-}]);
+  let MAP = generateRandomMaze({ rows: rows, cols: cols });
 
-astar([{
-  map: deepCopy(MAP),
-  cost: 0,
-  destination: [MAP.length-1,MAP[MAP.length-1].indexOf(' ')]
-}]);
+  bfs([{
+    map: deepCopy(MAP),
+    cost: 0,
+    destination: [MAP.length-1,MAP[MAP.length-1].indexOf(' ')]
+  }]);
 
+  dfs([{
+    map: deepCopy(MAP),
+    cost: 0,
+    destination: [MAP.length-1,MAP[MAP.length-1].indexOf(' ')]
+  }]);
 
+  let solution = astar([{
+    map: deepCopy(MAP),
+    cost: 0,
+    destination: [MAP.length-1,MAP[MAP.length-1].indexOf(' ')]
+  }]);
+
+  // Display solution
+  generateMapHTML('#solution', solution.map);
+  paintMapHTML($('#solution .map'), solution.map);
+
+});
