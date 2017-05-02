@@ -85,18 +85,12 @@ let successors = (state) => {
 };
 
 let dfs = (frontier) => {
-  let visited = [];
-
   let mapPainterBuffer = generateMapPainter(frontier[0].map);
 
   while(true) {
     let node = frontier.pop();
     if(!node) break;
 
-    let strMap = mapToString(node.map);
-    if(visited.includes(strMap)) continue;
-
-    visited.push(strMap);
     mapPainterBuffer.push(node.map);
 
     if(isGoalState(node)) {
@@ -107,18 +101,12 @@ let dfs = (frontier) => {
 };
 
 let bfs = (frontier) => {
-  let visited = [];
-
   let mapPainterBuffer = generateMapPainter(frontier[0].map);
 
   while(true) {
     let node = frontier.shift();
     if(!node) break;
 
-    let strMap = mapToString(node.map);
-    if(visited.includes(strMap)) continue;
-
-    visited.push(strMap);
     mapPainterBuffer.push(node.map);
 
     if(isGoalState(node)) {
@@ -129,18 +117,12 @@ let bfs = (frontier) => {
 };
 
 let astar = (frontier) => {
-  let visited = [];
-
   let mapPainterBuffer = generateMapPainter(frontier[0].map);
 
   while(true) {
     let node = frontier.shift();
     if(!node) break;
 
-    let strMap = mapToString(node.map);
-    if(visited.includes(strMap)) continue;
-
-    visited.push(strMap);
     mapPainterBuffer.push(node.map);
 
     if(isGoalState(node)) {
