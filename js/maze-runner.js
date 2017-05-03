@@ -43,11 +43,8 @@ let runStreak = (state,from) => {
       [row,col] = nextSteps[0];
     } else {
       map[row][col] = RUNNER;
-      stateCopy.distanceToDestination = Math.sqrt(
-        Math.pow(Math.abs(stateCopy.destination[0]-row),2)
-        +
-        Math.pow(Math.abs(stateCopy.destination[1]-col),2)
-      );
+      stateCopy.cost += 1;
+      stateCopy.distanceToDestination = Math.abs(stateCopy.destination[0]-row) +  Math.abs(stateCopy.destination[1]-col);
       break;
     }
   }
